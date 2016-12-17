@@ -29,6 +29,21 @@ import UIKit
 
 /// Class packages information used to display UI blocker.
 public final class ActivityData {
+    /// Is container blocking screen
+    let isBlockingScreen: Bool
+    
+    /// OnClose block
+    let onCloseBlock: (() -> Void)?
+    
+    /// Is of container activity indicator view closeable by tap on it.
+    let isCloseable: Bool
+    
+    /// Background color of container activity indicator view.
+    let backgroundColor: UIColor
+    
+    /// Background alpha of container activity indicator view.
+    let backgroundAlpha: CGFloat
+    
     /// Size of activity indicator view.
     let size: CGSize
     
@@ -76,7 +91,12 @@ public final class ActivityData {
                 color: UIColor? = nil,
                 padding: CGFloat? = nil,
                 displayTimeThreshold: Int? = nil,
-                minimumDisplayTime: Int? = nil) {
+                minimumDisplayTime: Int? = nil,
+                isCloseable: Bool? = nil,
+                isBlockingScreen: Bool? = nil,
+                backgroundColor: UIColor? = nil,
+                backgroundAlpha: CGFloat? = nil,
+                onCloseBlock: (() -> Void)? = nil) {
         self.size = size ?? NVActivityIndicatorView.DEFAULT_BLOCKER_SIZE
         self.message = message ?? NVActivityIndicatorView.DEFAULT_BLOCKER_MESSAGE
         self.messageFont = messageFont ?? NVActivityIndicatorView.DEFAULT_BLOCKER_MESSAGE_FONT
@@ -85,6 +105,11 @@ public final class ActivityData {
         self.padding = padding ?? NVActivityIndicatorView.DEFAULT_PADDING
         self.displayTimeThreshold = displayTimeThreshold ?? NVActivityIndicatorView.DEFAULT_BLOCKER_DISPLAY_TIME_THRESHOLD
         self.minimumDisplayTime = minimumDisplayTime ?? NVActivityIndicatorView.DEFAULT_BLOCKER_MINIMUM_DISPLAY_TIME
+        self.isCloseable = isCloseable ?? NVActivityIndicatorView.DEFAULT_CLOSEABLE
+        self.isBlockingScreen = isBlockingScreen ?? NVActivityIndicatorView.DEFAULT_IS_BLOCKING_SCREEN
+        self.backgroundColor = backgroundColor ?? NVActivityIndicatorView.DEFAULT_BACKGROUND_COLOR
+        self.backgroundAlpha = backgroundAlpha ?? NVActivityIndicatorView.DEFAULT_BACKGROUND_ALPHA
+        self.onCloseBlock = onCloseBlock ?? NVActivityIndicatorView.DEFAULT_ONCLOSEBLOCK
     }
 }
 
@@ -94,6 +119,7 @@ public final class NVActivityIndicatorPresenter {
     private var hideTimer: Timer?
     private var isStopAnimatingCalled = false
     private let restorationIdentifier = "NVActivityIndicatorViewContainer"
+    private let restorationIdentifierIndicatorView = "NVActivityIndicatorViewIndicatorView"
     
     
     /// Shared instance of `NVActivityIndicatorPresenter`.
@@ -123,6 +149,18 @@ public final class NVActivityIndicatorPresenter {
         hide()
     }
     
+    @objc private func forceStopAnimating() {
+        if let timer = hideTimer,
+            let activityData = timer.userInfo as? ActivityData {
+            if let onCloseBlock = activityData.onCloseBlock {
+                onCloseBlock()
+            }
+        }
+        hideTimer?.invalidate()
+        hideTimer = nil
+        stopAnimating()
+    }
+    
     // MARK: - Timer events
     
     @objc private func showTimerFired(_ timer: Timer) {
@@ -143,8 +181,15 @@ public final class NVActivityIndicatorPresenter {
     private func show(with activityData: ActivityData) {
         let activityContainer: UIView = UIView(frame: UIScreen.main.bounds)
         
-        activityContainer.backgroundColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.5)
         activityContainer.restorationIdentifier = restorationIdentifier
+        activityContainer.backgroundColor = activityData.backgroundColor
+        activityContainer.backgroundColor = activityContainer.backgroundColor?.withAlphaComponent(activityData.backgroundAlpha)
+        
+        if (activityData.isBlockingScreen) {
+            activityContainer.isUserInteractionEnabled = true
+        } else {
+            activityContainer.isUserInteractionEnabled = false
+        }
         
         let actualSize = activityData.size
         let activityIndicatorView = NVActivityIndicatorView(
@@ -153,9 +198,16 @@ public final class NVActivityIndicatorPresenter {
             color: activityData.color,
             padding: activityData.padding)
         
+        activityIndicatorView.restorationIdentifier = restorationIdentifierIndicatorView
         activityIndicatorView.center = activityContainer.center
         activityIndicatorView.startAnimating()
-        activityContainer.addSubview(activityIndicatorView)
+        //activityContainer.addSubview(activityIndicatorView)
+        
+        if (activityData.isCloseable) {
+            activityIndicatorView.addGestureRecognizer(
+                UITapGestureRecognizer(target: self, action: #selector(forceStopAnimating))
+            )
+        }
         
         if let message = activityData.message , !message.isEmpty {
             let label = UILabel()
@@ -177,17 +229,19 @@ public final class NVActivityIndicatorPresenter {
             activityContainer.addSubview(label)
         }
         
-        hideTimer = scheduledTimer(activityData.minimumDisplayTime, selector: #selector(hideTimerFired(_:)), data: nil)
+        hideTimer = scheduledTimer(activityData.minimumDisplayTime, selector: #selector(hideTimerFired(_:)), data: activityData)
         guard let keyWindow = UIApplication.shared.keyWindow else { return }
         keyWindow.addSubview(activityContainer)
+        keyWindow.addSubview(activityIndicatorView)
     }
     
     private func hide() {
         guard let keyWindow = UIApplication.shared.keyWindow else { return }
         
         for item in keyWindow.subviews
-            where item.restorationIdentifier == restorationIdentifier {
-                item.removeFromSuperview()
+            where item.restorationIdentifier == restorationIdentifier
+                || item.restorationIdentifier == restorationIdentifierIndicatorView {
+                    item.removeFromSuperview()
         }
         showTimer?.invalidate()
         showTimer = nil
