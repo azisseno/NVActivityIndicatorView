@@ -15,7 +15,7 @@ class NVActivityIndicatorAnimationBLAnimation: NVActivityIndicatorAnimationDeleg
     
     func loadImages() {
         var images: [UIImage] = []
-        for i in 2..<7 {
+        for var i in 2..<7 {
             if let image = UIImage(named: "ic_loader_\(i)") {
                 images.append(image)
             }
@@ -30,18 +30,28 @@ class NVActivityIndicatorAnimationBLAnimation: NVActivityIndicatorAnimationDeleg
         loadImages()
         
         // Draw image layer
-        let frame = CGRect(
+        let backgroundLayer = CALayer()
+        backgroundLayer.frame = CGRect(
             x: 0,
             y: 0,
             width: size.width,
             height: size.width
         )
+        backgroundLayer.backgroundColor = UIColor.white.cgColor
         
+        let imageSize: CGFloat = 32
         let myImage = UIImage(named: "ic_loader_2")?.cgImage
-        imagesLayer.frame = frame
+        imagesLayer.frame = CGRect(
+            x: (layer.bounds.size.width / 2) - (imageSize / 2),
+            y: (layer.bounds.size.height / 2) - (imageSize / 2),
+            width: imageSize,
+            height: imageSize
+        )
         imagesLayer.contents = myImage
         imagesLayer.backgroundColor = UIColor.white.cgColor
+        layer.addSublayer(backgroundLayer)
         layer.addSublayer(imagesLayer)
+        
         animate()
     }
     
@@ -51,7 +61,7 @@ class NVActivityIndicatorAnimationBLAnimation: NVActivityIndicatorAnimationDeleg
                 guard let ws = self else { return }
                 
                 if ws.images.count > ws.indexOfImages {
-                    let image = ws.images[ws.indexOfImages]
+                    let image = ws.images[ws.indexOfImages].cgImage
                     ws.imagesLayer.contents = image
                 }
                 ws.indexOfImages += 1

@@ -120,7 +120,7 @@ public final class NVActivityIndicatorPresenter {
     private var isStopAnimatingCalled = false
     private let restorationIdentifier = "NVActivityIndicatorViewContainer"
     private let restorationIdentifierIndicatorView = "NVActivityIndicatorViewIndicatorView"
-    
+    private let restorationIdentifierMessage = "restorationIdentifierMessage"
     
     /// Shared instance of `NVActivityIndicatorPresenter`.
     public static let sharedInstance = NVActivityIndicatorPresenter()
@@ -201,7 +201,6 @@ public final class NVActivityIndicatorPresenter {
         activityIndicatorView.restorationIdentifier = restorationIdentifierIndicatorView
         activityIndicatorView.center = activityContainer.center
         activityIndicatorView.startAnimating()
-        //activityContainer.addSubview(activityIndicatorView)
         
         if (activityData.isCloseable) {
             activityIndicatorView.addGestureRecognizer(
@@ -209,30 +208,41 @@ public final class NVActivityIndicatorPresenter {
             )
         }
         
+        var label: UILabel?
         if let message = activityData.message , !message.isEmpty {
-            let label = UILabel()
-            
-            label.textAlignment = .center
-            label.text = message
-            label.font = activityData.messageFont
-            label.textColor = activityIndicatorView.color
-            label.numberOfLines = 0
-            label.sizeToFit()
-            if label.bounds.size.width > activityContainer.bounds.size.width {
-                let maxWidth = activityContainer.bounds.size.width - 16
-                
-                label.bounds.size = NSString(string: message).boundingRect(with: CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude), options: .usesLineFragmentOrigin, attributes: [NSFontAttributeName: label.font], context: nil).size
+            label = UILabel()
+            if let label = label {
+                label.restorationIdentifier = restorationIdentifierMessage
+                label.textAlignment = .center
+                label.text = message
+                label.font = activityData.messageFont
+                label.textColor = activityIndicatorView.color
+                label.numberOfLines = 0
+                label.sizeToFit()
+                if label.bounds.size.width > activityContainer.bounds.size.width {
+                    let maxWidth = activityContainer.bounds.size.width - 16
+                    
+                    label.bounds.size = NSString(string: message).boundingRect(with: CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude), options: .usesLineFragmentOrigin, attributes: [NSFontAttributeName: label.font], context: nil).size
+                }
+                var labelY = activityIndicatorView.center.y + actualSize.height
+                if activityData.type == .blAnimation {
+                    labelY -= (label.bounds.size.height / 2 + 8)
+                } else {
+                    labelY += (label.bounds.size.height / 2 + 8)
+                }
+                label.center = CGPoint(
+                    x: activityIndicatorView.center.x,
+                    y: labelY)
             }
-            label.center = CGPoint(
-                x: activityIndicatorView.center.x,
-                y: activityIndicatorView.center.y + actualSize.height + label.bounds.size.height / 2 + 8)
-            activityContainer.addSubview(label)
         }
         
         hideTimer = scheduledTimer(activityData.minimumDisplayTime, selector: #selector(hideTimerFired(_:)), data: activityData)
         guard let keyWindow = UIApplication.shared.keyWindow else { return }
         keyWindow.addSubview(activityContainer)
         keyWindow.addSubview(activityIndicatorView)
+        if let label = label {
+            keyWindow.addSubview(label)
+        }
     }
     
     private func hide() {
@@ -240,7 +250,8 @@ public final class NVActivityIndicatorPresenter {
         
         for item in keyWindow.subviews
             where item.restorationIdentifier == restorationIdentifier
-                || item.restorationIdentifier == restorationIdentifierIndicatorView {
+                || item.restorationIdentifier == restorationIdentifierIndicatorView
+                || item.restorationIdentifier == restorationIdentifierMessage {
                     item.removeFromSuperview()
         }
         showTimer?.invalidate()
