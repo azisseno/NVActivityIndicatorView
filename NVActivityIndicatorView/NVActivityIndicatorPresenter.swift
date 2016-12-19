@@ -224,7 +224,7 @@ public final class NVActivityIndicatorPresenter {
                     
                     label.bounds.size = NSString(string: message).boundingRect(with: CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude), options: .usesLineFragmentOrigin, attributes: [NSFontAttributeName: label.font], context: nil).size
                 }
-                var labelY = activityIndicatorView.center.y + actualSize.height
+                var labelY = activityIndicatorView.center.y + (actualSize.height / 2)
                 if activityData.type == .blAnimation {
                     labelY -= (label.bounds.size.height / 2 + 8)
                 } else {

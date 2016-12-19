@@ -38,6 +38,7 @@ class NVActivityIndicatorAnimationBLAnimation: NVActivityIndicatorAnimationDeleg
             height: size.width
         )
         backgroundLayer.backgroundColor = UIColor.white.cgColor
+        backgroundLayer.cornerRadius = 1
         
         let imageSize: CGFloat = 32
         let myImage = UIImage(named: "ic_loader_2")?.cgImage
