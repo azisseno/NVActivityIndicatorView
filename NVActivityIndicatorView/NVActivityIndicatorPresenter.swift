@@ -226,7 +226,7 @@ public final class NVActivityIndicatorPresenter {
                 }
                 var labelY = activityIndicatorView.center.y + (actualSize.height / 2)
                 if activityData.type == .blAnimation {
-                    labelY -= (label.bounds.size.height / 2 + 8)
+                    labelY -= (label.bounds.size.height + 8)
                 } else {
                     labelY += (label.bounds.size.height / 2 + 8)
                 }

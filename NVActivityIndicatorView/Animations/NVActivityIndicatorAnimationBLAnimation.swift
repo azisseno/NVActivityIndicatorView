@@ -34,8 +34,8 @@ class NVActivityIndicatorAnimationBLAnimation: NVActivityIndicatorAnimationDeleg
         backgroundLayer.frame = CGRect(
             x: 0,
             y: 0,
-            width: size.width,
-            height: size.width
+            width: size.width + 4,
+            height: size.height
         )
         backgroundLayer.backgroundColor = UIColor.white.cgColor
         backgroundLayer.cornerRadius = 20
@@ -44,7 +44,7 @@ class NVActivityIndicatorAnimationBLAnimation: NVActivityIndicatorAnimationDeleg
         let myImage = UIImage(named: "ic_loader_2")?.cgImage
         imagesLayer.frame = CGRect(
             x: (layer.bounds.size.width / 2) - (imageSize / 2),
-            y: (layer.bounds.size.height / 2) - (imageSize / 2),
+            y: (layer.bounds.size.height / 2) - (imageSize * 5 / 6),
             width: imageSize,
             height: imageSize
         )
@@ -66,6 +66,9 @@ class NVActivityIndicatorAnimationBLAnimation: NVActivityIndicatorAnimationDeleg
                     ws.imagesLayer.contents = image
                 }
                 ws.indexOfImages += 1
+                if ws.indexOfImages >= 7 {
+                    ws.indexOfImages = 0
+                }
                 ws.animate()
             })
         }
