@@ -258,14 +258,14 @@ public enum NVActivityIndicatorType: Int {
      */
     case audioEqualizer
     /**
-     Stroke.
+     BLAnimation.
      
-     - returns: Instance of NVActivityIndicatorAnimationCircleStrokeSpin.
+     - returns: Instance of NVActivityIndicatorAnimationBLAnimation.
      */
-    case circleStrokeSpin
-
-    static let allTypes = (blank.rawValue ... circleStrokeSpin.rawValue).map { NVActivityIndicatorType(rawValue: $0)! }
-
+    case blAnimation
+    
+    static let allTypes = (blank.rawValue ... audioEqualizer.rawValue).map{ NVActivityIndicatorType(rawValue: $0)! }
+    
     func animation() -> NVActivityIndicatorAnimationDelegate {
         switch self {
         case .blank:
@@ -332,14 +332,29 @@ public enum NVActivityIndicatorType: Int {
             return NVActivityIndicatorAnimationOrbit()
         case .audioEqualizer:
             return NVActivityIndicatorAnimationAudioEqualizer()
-        case .circleStrokeSpin:
-            return NVActivityIndicatorAnimationCircleStrokeSpin()
+        case .blAnimation:
+            return NVActivityIndicatorAnimationBLAnimation()
         }
     }
 }
 
 /// Activity indicator view with nice animations
 public final class NVActivityIndicatorView: UIView {
+    /// Default is view blocking screen. Default value is true.
+    public static var DEFAULT_IS_BLOCKING_SCREEN: Bool = true
+    
+    /// Default is view closeable. Default value is false.
+    public static var DEFAULT_ONCLOSEBLOCK: (() -> Void)? = nil
+    
+    /// Default is view closeable. Default value is false.
+    public static var DEFAULT_CLOSEABLE: Bool = false
+    
+    /// Default background color. Default value is clear color.
+    public static var DEFAULT_BACKGROUND_COLOR: UIColor = UIColor.clear
+    
+    /// Default background alpha. Default value is 0.5.
+    public static var DEFAULT_BACKGROUND_ALPHA: CGFloat = 0.5
+    
     /// Default type. Default value is .BallSpinFadeLoader.
     public static var DEFAULT_TYPE: NVActivityIndicatorType = .ballSpinFadeLoader
 
