@@ -29,8 +29,6 @@ import UIKit
 
 /// Class packages information used to display UI blocker.
 public final class ActivityData {
-    /// Is container blocking screen
-    let isBlockingScreen: Bool
     
     /// OnClose block
     let onCloseBlock: (() -> Void)?
@@ -99,7 +97,6 @@ public final class ActivityData {
                 displayTimeThreshold: Int? = nil,
                 minimumDisplayTime: Int? = nil,
                 isCloseable: Bool? = nil,
-                isBlockingScreen: Bool? = nil,
                 backgroundColor: UIColor? = nil,
                 textColor: UIColor? = nil,
                 onCloseBlock: (() -> Void)? = nil) {
@@ -112,11 +109,10 @@ public final class ActivityData {
         self.padding = padding ?? NVActivityIndicatorView.DEFAULT_PADDING
         self.displayTimeThreshold = displayTimeThreshold ?? NVActivityIndicatorView.DEFAULT_BLOCKER_DISPLAY_TIME_THRESHOLD
         self.minimumDisplayTime = minimumDisplayTime ?? NVActivityIndicatorView.DEFAULT_BLOCKER_MINIMUM_DISPLAY_TIME
-        self.isCloseable = isCloseable ?? NVActivityIndicatorView.DEFAULT_CLOSEABLE
-        self.isBlockingScreen = isBlockingScreen ?? NVActivityIndicatorView.DEFAULT_IS_BLOCKING_SCREEN
+        self.isCloseable = isCloseable ?? false
         self.backgroundColor = backgroundColor ?? NVActivityIndicatorView.DEFAULT_BLOCKER_BACKGROUND_COLOR
         self.textColor = textColor ?? color ?? NVActivityIndicatorView.DEFAULT_TEXT_COLOR
-        self.onCloseBlock = onCloseBlock ?? NVActivityIndicatorView.DEFAULT_ONCLOSEBLOCK
+        self.onCloseBlock = onCloseBlock
     }
 }
 
@@ -160,7 +156,8 @@ public final class NVActivityIndicatorPresenter {
      */
     public final func startAnimating(_ data: ActivityData) {
         guard state == .hidden else { return }
-        
+        onCloseBlock = data.onCloseBlock
+
         state = .waitingToShow
         startAnimatingGroup.enter()
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(data.displayTimeThreshold)) {
@@ -205,20 +202,14 @@ public final class NVActivityIndicatorPresenter {
     
     private func show(with activityData: ActivityData) {
         
-        onCloseBlock = activityData.onCloseBlock
-        
         let containerView = UIView(frame: UIScreen.main.bounds)
         
         containerView.backgroundColor = activityData.backgroundColor
         containerView.restorationIdentifier = restorationIdentifier
         containerView.translatesAutoresizingMaskIntoConstraints = false
         
-        if (activityData.isBlockingScreen) {
-            containerView.isUserInteractionEnabled = true
-        } else {
-            containerView.isUserInteractionEnabled = false
-        }
-        
+        containerView.isUserInteractionEnabled = false
+
         let activityIndicatorView = NVActivityIndicatorView(
             frame: CGRect(x: 0, y: 0, width: activityData.size.width, height: activityData.size.height),
             type: activityData.type,
@@ -227,6 +218,7 @@ public final class NVActivityIndicatorPresenter {
         
         activityIndicatorView.startAnimating()
         if (activityData.isCloseable) {
+            containerView.isUserInteractionEnabled = true
             containerView.addGestureRecognizer(
                 UITapGestureRecognizer(target: self, action: #selector(forceStopAnimating))
             )
